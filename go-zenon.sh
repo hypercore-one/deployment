@@ -2,20 +2,22 @@
 
 # Large ASCII Art for Zenon Network
 echo "
-███████╗███████╗███╗░░██╗░█████╗░███╗░░██╗  ███╗░░██╗███████╗████████╗░██╗░░░░░░░██╗░█████╗░██████╗░██╗░░██╗
-╚════██║██╔════╝████╗░██║██╔══██╗████╗░██║  ████╗░██║██╔════╝╚══██╔══╝░██║░░██╗░░██║██╔══██╗██╔══██╗██║░██╔╝
-░░███╔═╝█████╗░░██╔██╗██║██║░░██║██╔██╗██║  ██╔██╗██║█████╗░░░░░██║░░░░╚██╗████╗██╔╝██║░░██║██████╔╝█████═╝░
-██╔══╝░░██╔══╝░░██║╚████║██║░░██║██║╚████║  ██║╚████║██╔══╝░░░░░██║░░░░░████╔═████║░██║░░██║██╔══██╗██╔═██╗░
-███████╗███████╗██║░╚███║╚█████╔╝██║░╚███║  ██║░╚███║███████╗░░░██║░░░░░╚██╔╝░╚██╔╝░╚█████╔╝██║░░██║██║░╚██╗
-╚══════╝╚══════╝╚═╝░░╚══╝░╚════╝░╚═╝░░╚══╝  ╚═╝░░╚══╝╚══════╝░░░╚═╝░░░░░░╚═╝░░░╚═╝░░░╚════╝░╚═╝░░╚═╝╚═╝░░╚═╝
+  ______  ______   _   _    ____    _   _             _     
+ |___  / |  ____| | \ | |  / __ \  | \ | |           | |    
+    / /  | |__    |  \| | | |  | | |  \| |      ___  | |__  
+   / /   |  __|   | . \` | | |  | | | . \` |     / __| | '_ \ 
+  / /__  | |____  | |\  | | |__| | | |\  |  _  \__ \ | | | |
+ /_____| |______| |_| \_|  \____/  |_| \_| (_) |___/ |_| |_|
+                                                            
+ 00110011 00110010 00110001
+  _   _      _                      _             __   __  __                            _                   
+ | \ | |    | |                    | |           / _| |  \/  |                          | |                  
+ |  \| | ___| |___      _____  _ __| | __   ___ | |_  | \  / | ___  _ __ ___   ___ _ __ | |_ _   _ _ __ ___  
+ | . \` |/ _ \ __\ \ /\ / / _ \| '__| |/ /  / _ \|  _| | |\/| |/ _ \| '_ \` _ \ / _ \ '_ \| __| | | | '_ \` _ \ 
+ | |\  |  __/ |_ \ V  V / (_) | |  |   <  | (_) | |   | |  | | (_) | | | | | |  __/ | | | |_| |_| | | | | | |
+ |_| \_|\___|\__| \_/\_/ \___/|_|  |_|\_\  \___/|_|   |_|  |_|\___/|_| |_| |_|\___|_| |_|\__|\__,_|_| |_| |_|
 
-▀█▀ █░█ █▀▀   █▄░█ █▀▀ ▀█▀ █░█░█ █▀█ █▀█ █▄▀   █▀█ █▀▀   █▀▄▀█ █▀█ █▀▄▀█ █▀▀ █▄░█ ▀█▀ █░█ █▀▄▀█
-░█░ █▀█ ██▄   █░▀█ ██▄ ░█░ ▀▄▀▄▀ █▄█ █▀▄ █░█   █▄█ █▀░   █░▀░█ █▄█ █░▀░█ ██▄ █░▀█ ░█░ █▄█ █░▀░█
 "
-
-# Display starting message
-echo "Starting Zenon Network setup script..."
-
 # Check architecture and OS
 if [[ "$(uname -m)" != "x86_64" ]]; then
     echo "Error: This script only supports x86_64 architecture."
@@ -253,6 +255,22 @@ monitor_logs() {
     tail -f /var/log/syslog | grep znnd
 }
 
+show_help() {
+    echo "A script to automate the setup, management, and restoration of the Zenon Network."
+    echo
+    echo "Usage: $0 [OPTIONS]"
+    echo
+    echo "Options:"
+    echo "  --deploy            Deploy and set up the Zenon Network"
+    echo "  --restore           Restore go-zenon from bootstrap"
+    echo "  --restart           Restart the go-zenon service"
+    echo "  --stop              Stop the go-zenon service"
+    echo "  --start             Start the go-zenon service"
+    echo "  --status            Monitor znnd logs"
+    echo "  --help              Display this help message"
+    echo
+}
+
 # Check for flags
 if [[ $# -eq 0 ]]; then
     deploy_go_zenon
@@ -283,9 +301,13 @@ else
                 monitor_logs
                 exit
                 ;;
+            --help )
+                show_help
+                exit
+                ;;
             * )
                 echo "Invalid option: $1"
-                echo "Usage: $0 [--deploy] [--restore] [--restart] [--stop] [--start] [--status]"
+                echo "Usage: $0 [--deploy] [--restore] [--restart] [--stop] [--start] [--status] [--help]"
                 exit 1
         esac
         shift
