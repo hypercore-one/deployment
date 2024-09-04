@@ -19,8 +19,21 @@ echo "
 
 "
 # Check architecture and OS
-if [[ "$(uname -m)" != "x86_64" ]]; then
-    echo "Error: This script only supports x86_64 architecture."
+
+ARCH=$(uname -m)
+GO_URL=""
+GO_VERSION=1.23.0
+
+if [[ "$ARCH" == "x86_64" ]]; then
+    GO_URL="https://go.dev/dl/go$GO_VERSION.linux-amd64.tar.gz"
+fi
+
+if [[ "$ARCH" == "arm64" ]]; then
+    GO_URL="https://go.dev/dl/go$GO_VERSION.linux-arm64.tar.gz"
+fi
+
+if [[ "$GO_URL" == "" ]]; then
+    echo "Error: $ARCH architecture is not supported."
     exit 1
 fi
 
@@ -42,8 +55,7 @@ install_go() {
     rename_existing_dir "go"
 
     echo "Downloading and installing Go..."
-    local go_url="https://golang.org/dl/go1.20.3.linux-amd64.tar.gz"
-    curl -fsSLo "go.tar.gz" "$go_url"
+    curl -fsSLo "go.tar.gz" "$GO_URL"
     tar -C . -xzf "go.tar.gz"
     rm "go.tar.gz"
     echo "Go installed successfully."
