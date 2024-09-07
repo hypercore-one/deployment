@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # Large ASCII Art for Zenon Network
-echo "
+echo <<EOF
  ______                             _                                                                       
 |___  /                            | |                                                                      
    / /  ___ _ __   ___  _ __    ___| |__                                                                    
@@ -16,7 +16,8 @@ echo "
 | . ` |/ _ \ __\ \ /\ / / _ \| '__| |/ /  / _ \|  _| | |\/| |/ _ \| '_ ` _ \ / _ \ '_ \| __| | | | '_ ` _ \ 
 | |\  |  __/ |_ \ V  V / (_) | |  |   <  | (_) | |   | |  | | (_) | | | | | |  __/ | | | |_| |_| | | | | | |
 \_| \_/\___|\__| \_/\_/ \___/|_|  |_|\_\  \___/|_|   \_|  |_/\___/|_| |_| |_|\___|_| |_|\__|\__,_|_| |_| |_|
-"
+EOF
+
 
 # Check architecture and OS
 
@@ -28,9 +29,10 @@ if [[ "$ARCH" == "x86_64" ]]; then
     GO_URL="https://go.dev/dl/go$GO_VERSION.linux-amd64.tar.gz"
 fi
 
-if [[ "$ARCH" == "arm64" ]]; then
-    GO_URL="https://go.dev/dl/go$GO_VERSION.linux-arm64.tar.gz"
-fi
+# ARM Support TODO
+# if [[ "$ARCH" == "arm64" ]]; then
+#     GO_URL="https://go.dev/dl/go$GO_VERSION.linux-arm64.tar.gz"
+# fi
 
 if [[ "$GO_URL" == "" ]]; then
     echo "Error: $ARCH architecture is not supported."
@@ -267,6 +269,15 @@ monitor_logs() {
     tail -f /var/log/syslog | grep znnd
 }
 
+# Function to install Grafana
+install_grafana() {
+    echo "Installing Grafana..."
+    wget -O grafana.sh https://raw.githubusercontent.com/go-zenon/go/main/grafana.sh
+    chmod +x grafana.sh
+    ./grafana.sh
+    echo "Grafana installed successfully."
+}
+
 show_help() {
     echo "A script to automate the setup, management, and restoration of the Zenon Network."
     echo
@@ -279,6 +290,7 @@ show_help() {
     echo "  --stop              Stop the go-zenon service"
     echo "  --start             Start the go-zenon service"
     echo "  --status            Monitor znnd logs"
+    echo "  --grafana           Install Grafana"
     echo "  --help              Display this help message"
     echo
 }
@@ -313,13 +325,17 @@ else
                 monitor_logs
                 exit
                 ;;
+            --grafana )
+                install_grafana
+                exit
+                ;;
             --help )
                 show_help
                 exit
                 ;;
             * )
                 echo "Invalid option: $1"
-                echo "Usage: $0 [--deploy] [--restore] [--restart] [--stop] [--start] [--status] [--help]"
+                echo "Usage: $0 [--deploy] [--restore] [--restart] [--stop] [--start] [--status] [--grafana] [--help]"
                 exit 1
         esac
         shift
