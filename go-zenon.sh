@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # Large ASCII Art for Zenon Network
-echo <<EOF
+cat << 'EOF'
  ______                             _                                                                       
 |___  /                            | |                                                                      
    / /  ___ _ __   ___  _ __    ___| |__                                                                    
@@ -17,7 +17,6 @@ echo <<EOF
 | |\  |  __/ |_ \ V  V / (_) | |  |   <  | (_) | |   | |  | | (_) | | | | | |  __/ | | | |_| |_| | | | | | |
 \_| \_/\___|\__| \_/\_/ \___/|_|  |_|\_\  \___/|_|   \_|  |_/\___/|_| |_| |_|\___|_| |_|\__|\__,_|_| |_| |_|
 EOF
-
 
 # Check architecture and OS
 
@@ -67,7 +66,10 @@ install_go() {
 install_dependencies() {
     echo "Updating system and installing dependencies..."
 
-    # Automatically select default options using -y
+    # Set environment variable to prevent prompts
+    export DEBIAN_FRONTEND=noninteractive
+
+    # Automatically select default options using -y and avoid interactive prompts
     apt-get update -y && apt-get upgrade -y
 
     # Check if make is installed
@@ -90,6 +92,9 @@ install_dependencies() {
         echo "Installing jq..."
         apt-get install -y jq
     fi
+
+    # Unset the environment variable after use
+    unset DEBIAN_FRONTEND
 }
 
 # Function to stop go-zenon if running
@@ -254,13 +259,6 @@ stop_go_zenon() {
     echo "Stopping go-zenon..."
     systemctl stop go-zenon
     echo "go-zenon stopped successfully."
-}
-
-# Function to start go-zenon
-start_go_zenon() {
-    echo "Starting go-zenon..."
-    systemctl start go-zenon
-    echo "go-zenon started successfully."
 }
 
 # Function to monitor znnd logs
