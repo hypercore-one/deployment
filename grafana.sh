@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Set environment to noninteractive to prevent prompts
+export DEBIAN_FRONTEND=noninteractive
+
 # Update package lists
 sudo apt-get update
 
@@ -135,4 +138,3 @@ curl -X POST -H "Content-Type: application/json" \
   http://localhost:3000/api/dashboards/db
 
 echo "Installation and configuration completed successfully."
-
