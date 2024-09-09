@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Set environment to noninteractive to prevent prompts during apt-get operations
+export DEBIAN_FRONTEND=noninteractive
+
 # Update package lists
 sudo apt-get update
 
@@ -9,11 +12,11 @@ sudo apt-get install -y apt-transport-https software-properties-common wget curl
 # Install Node Exporter
 NODE_EXPORTER_VERSION="1.6.1"
 echo "Installing Node Exporter..."
-wget -O node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXPORTER_VERSION}/node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
-tar xvf node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
+wget -q -O node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXPORTER_VERSION}/node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
+tar -xzf node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
 sudo mv node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64/node_exporter /usr/local/bin/
 sudo useradd -rs /bin/false node_exporter
-sudo tee /etc/systemd/system/node_exporter.service << EOF
+sudo tee /etc/systemd/system/node_exporter.service > /dev/null << EOF
 [Unit]
 Description=Node Exporter
 Wants=network-online.target
@@ -36,15 +39,15 @@ rm -rf node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz node_exporter-$
 # Install Prometheus
 PROMETHEUS_VERSION="2.47.0"
 echo "Installing Prometheus..."
-wget -O prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
-tar xvf prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
+wget -q -O prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
+tar -xzf prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
 sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/prometheus /usr/local/bin/
 sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/promtool /usr/local/bin/
 sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/consoles /etc/prometheus/
 sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/console_libraries /etc/prometheus/
 sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/prometheus.yml /etc/prometheus/
 sudo useradd -rs /bin/false prometheus
-sudo tee /etc/systemd/system/prometheus.service << EOF
+sudo tee /etc/systemd/system/prometheus.service > /dev/null << EOF
 [Unit]
 Description=Prometheus
 Wants=network-online.target
@@ -78,12 +81,11 @@ EOL
 # Restart Prometheus to apply changes
 sudo systemctl restart prometheus
 
-# Install Grafana following the official instructions
+# Install Grafana
 echo "Installing Grafana..."
 sudo mkdir -p /etc/apt/keyrings/
 wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
-echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
-echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list > /dev/null
 sudo apt-get update
 sudo apt-get install -y grafana
 
@@ -135,4 +137,3 @@ curl -X POST -H "Content-Type: application/json" \
   http://localhost:3000/api/dashboards/db
 
 echo "Installation and configuration completed successfully."
-

@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 # Large ASCII Art for Zenon Network
-echo "
+cat << 'EOF'
  ______                             _                                                                       
 |___  /                            | |                                                                      
    / /  ___ _ __   ___  _ __    ___| |__                                                                    
@@ -16,7 +16,7 @@ echo "
 | . ` |/ _ \ __\ \ /\ / / _ \| '__| |/ /  / _ \|  _| | |\/| |/ _ \| '_ ` _ \ / _ \ '_ \| __| | | | '_ ` _ \ 
 | |\  |  __/ |_ \ V  V / (_) | |  |   <  | (_) | |   | |  | | (_) | | | | | |  __/ | | | |_| |_| | | | | | |
 \_| \_/\___|\__| \_/\_/ \___/|_|  |_|\_\  \___/|_|   \_|  |_/\___/|_| |_| |_|\___|_| |_|\__|\__,_|_| |_| |_|
-"
+EOF
 
 # Check architecture and OS
 
@@ -28,9 +28,10 @@ if [[ "$ARCH" == "x86_64" ]]; then
     GO_URL="https://go.dev/dl/go$GO_VERSION.linux-amd64.tar.gz"
 fi
 
-if [[ "$ARCH" == "arm64" ]]; then
-    GO_URL="https://go.dev/dl/go$GO_VERSION.linux-arm64.tar.gz"
-fi
+# ARM Support TODO
+# if [[ "$ARCH" == "arm64" ]]; then
+#     GO_URL="https://go.dev/dl/go$GO_VERSION.linux-arm64.tar.gz"
+# fi
 
 if [[ "$GO_URL" == "" ]]; then
     echo "Error: $ARCH architecture is not supported."
@@ -65,7 +66,10 @@ install_go() {
 install_dependencies() {
     echo "Updating system and installing dependencies..."
 
-    # Automatically select default options using -y
+    # Set environment variable to prevent prompts
+    export DEBIAN_FRONTEND=noninteractive
+
+    # Automatically select default options using -y and avoid interactive prompts
     apt-get update -y && apt-get upgrade -y
 
     # Check if make is installed
@@ -88,6 +92,9 @@ install_dependencies() {
         echo "Installing jq..."
         apt-get install -y jq
     fi
+
+    # Unset the environment variable after use
+    unset DEBIAN_FRONTEND
 }
 
 # Function to stop go-zenon if running
@@ -254,17 +261,19 @@ stop_go_zenon() {
     echo "go-zenon stopped successfully."
 }
 
-# Function to start go-zenon
-start_go_zenon() {
-    echo "Starting go-zenon..."
-    systemctl start go-zenon
-    echo "go-zenon started successfully."
-}
-
 # Function to monitor znnd logs
 monitor_logs() {
     echo "Monitoring znnd logs. Press Ctrl+C to stop."
     tail -f /var/log/syslog | grep znnd
+}
+
+# Function to install Grafana
+install_grafana() {
+    echo "Installing Grafana..."
+    wget -O grafana.sh https://raw.githubusercontent.com/go-zenon/go/main/grafana.sh
+    chmod +x grafana.sh
+    ./grafana.sh
+    echo "Grafana installed successfully."
 }
 
 show_help() {
@@ -279,6 +288,7 @@ show_help() {
     echo "  --stop              Stop the go-zenon service"
     echo "  --start             Start the go-zenon service"
     echo "  --status            Monitor znnd logs"
+    echo "  --grafana           Install Grafana"
     echo "  --help              Display this help message"
     echo
 }
@@ -313,13 +323,17 @@ else
                 monitor_logs
                 exit
                 ;;
+            --grafana )
+                install_grafana
+                exit
+                ;;
             --help )
                 show_help
                 exit
                 ;;
             * )
                 echo "Invalid option: $1"
-                echo "Usage: $0 [--deploy] [--restore] [--restart] [--stop] [--start] [--status] [--help]"
+                echo "Usage: $0 [--deploy] [--restore] [--restart] [--stop] [--start] [--status] [--grafana] [--help]"
                 exit 1
         esac
         shift
