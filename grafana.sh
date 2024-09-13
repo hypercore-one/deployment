@@ -117,9 +117,9 @@ curl -X POST -H "Content-Type: application/json" \
   http://localhost:3000/api/datasources
 
 # Fetch and prepare the Prometheus Node Exporter Dashboard (ID 1860)
-DASHBOARD_JSON_URL="https://grafana.com/api/dashboards/1860/revisions/latest/download"
+PROM_DASHBOARD_JSON_URL="https://grafana.com/api/dashboards/1860/revisions/latest/download"
 echo "Importing Prometheus Node Exporter Dashboard..."
-curl -s $DASHBOARD_JSON_URL -o /tmp/node_exporter_dashboard.json
+curl -s $PROM_DASHBOARD_JSON_URL -o /tmp/node_exporter_dashboard.json
 
 # Construct the final API request payload with the dashboard JSON
 cat <<EOF > /tmp/import_dashboard.json
@@ -135,5 +135,48 @@ curl -X POST -H "Content-Type: application/json" \
   -u $GRAFANA_ADMIN_USER:$GRAFANA_ADMIN_PASSWORD \
   -d @/tmp/import_dashboard.json \
   http://localhost:3000/api/dashboards/db
+
+# Install Infinity Datasource Plugin
+INFINITY_PLUGIN_VERSION="2.9.5"
+echo "Installing Infinity Datasource plugin..."
+grafana-cli plugins install yesoreyeram-infinity-datasource $INFINITY_PLUGIN_VERSION
+sudo systemctl restart grafana-server
+
+# Configure the Infinity datasource
+echo "Configuring Infinity data source..."
+curl -X POST -H "Content-Type: application/json" \
+  -u $GRAFANA_ADMIN_USER:$GRAFANA_ADMIN_PASSWORD \
+  -d '{
+    "name": "yesoreyeram-infinity-datasource",
+    "type": "yesoreyeram-infinity-datasource",
+    "access": "proxy"
+  }' \
+  http://localhost:3000/api/datasources
+
+# Fetch and prepare the znnd dashboard
+ZNND_DASHBOARD_JSON_URL="https://raw.githubusercontent.com/go-zenon/go/main/dashboards/znnd.json"
+echo "Importing znnd Dashboard..."
+curl -s $ZNND_DASHBOARD_JSON_URL -o /tmp/znnd_dashboard.json
+
+# Construct the final API request payload with the dashboard JSON
+cat <<EOF > /tmp/import_znnd_dashboard.json
+{
+  "dashboard": $(cat /tmp/znnd_dashboard.json),
+  "folderId": 0,
+  "overwrite": true,
+  "inputs": [{
+              "name": "DS_YESOREYERAM-INFINITY-DATASOURCE",
+              "type":"datasource",
+              "pluginId": "yesoreyeram-infinity-datasource",
+              "value": "yesoreyeram-infinity-datasource"}]
+}
+EOF
+
+# Import the dashboard using the Grafana API
+# api/dashboards/import is undocumented
+curl -X POST -H "Content-Type: application/json" \
+  -u $GRAFANA_ADMIN_USER:$GRAFANA_ADMIN_PASSWORD \
+  -d @/tmp/import_znnd_dashboard.json \
+  http://localhost:3000/api/dashboards/import
 
 echo "Installation and configuration completed successfully."
