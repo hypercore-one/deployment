@@ -8,8 +8,7 @@ cat << 'EOF'
   / /  / _ \ '_ \ / _ \| '_ \  / __| '_ \                                                                   
 ./ /__|  __/ | | | (_) | | | |_\__ \ | | |                                                                  
 \_____/\___|_| |_|\___/|_| |_(_)___/_| |_|                                                                  
-                                                                                                            
-                                                                                                            
+
  _   _      _                      _             __  ___  ___                           _                   
 | \ | |    | |                    | |           / _| |  \/  |                          | |                  
 |  \| | ___| |___      _____  _ __| | __   ___ | |_  | .  . | ___  _ __ ___   ___ _ __ | |_ _   _ _ __ ___  
@@ -92,9 +91,6 @@ install_dependencies() {
         echo "Installing jq..."
         apt-get install -y jq
     fi
-
-    # Unset the environment variable after use
-    unset DEBIAN_FRONTEND
 }
 
 # Function to stop go-zenon if running
@@ -239,12 +235,12 @@ deploy_go_zenon() {
 restore_go_zenon() {
     echo "Restoring go-zenon from bootstrap..."
     # Download and run the restore.sh script
-    wget -O temp_restore.sh "https://gist.githubusercontent.com/0x3639/05c6e2ba6b7f0c2a502a6bb4da6f4746/raw/ff4343433b31a6c85020c887256c0fd3e18f01d9/restore.sh"
-    chmod +x temp_restore.sh
-    ./temp_restore.sh
+    wget -O go-zenon_restore.sh "https://gist.githubusercontent.com/0x3639/05c6e2ba6b7f0c2a502a6bb4da6f4746/raw/ff4343433b31a6c85020c887256c0fd3e18f01d9/restore.sh"
+    chmod +x go-zenon_restore.sh
+    ./go-zenon_restore.sh
 
     # Cleanup the temporary restore script
-    rm temp_restore.sh
+    rm go-zenon_restore.sh
 }
 
 # Function to restart go-zenon

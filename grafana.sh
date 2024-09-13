@@ -4,19 +4,19 @@
 export DEBIAN_FRONTEND=noninteractive
 
 # Update package lists
-sudo apt-get update
+apt-get update
 
 # Install required packages
-sudo apt-get install -y apt-transport-https software-properties-common wget curl
+apt-get install -y apt-transport-https software-properties-common wget curl
 
 # Install Node Exporter
 NODE_EXPORTER_VERSION="1.6.1"
 echo "Installing Node Exporter..."
 wget -q -O node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz https://github.com/prometheus/node_exporter/releases/download/v${NODE_EXPORTER_VERSION}/node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
 tar -xzf node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz
-sudo mv node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64/node_exporter /usr/local/bin/
-sudo useradd -rs /bin/false node_exporter
-sudo tee /etc/systemd/system/node_exporter.service > /dev/null << EOF
+mv node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64/node_exporter /usr/local/bin/
+useradd -rs /bin/false node_exporter
+tee /etc/systemd/system/node_exporter.service > /dev/null << EOF
 [Unit]
 Description=Node Exporter
 Wants=network-online.target
@@ -31,9 +31,9 @@ ExecStart=/usr/local/bin/node_exporter
 [Install]
 WantedBy=multi-user.target
 EOF
-sudo systemctl daemon-reload
-sudo systemctl start node_exporter
-sudo systemctl enable node_exporter
+systemctl daemon-reload
+systemctl start node_exporter
+systemctl enable node_exporter
 rm -rf node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64.tar.gz node_exporter-${NODE_EXPORTER_VERSION}.linux-amd64
 
 # Install Prometheus
@@ -41,13 +41,13 @@ PROMETHEUS_VERSION="2.47.0"
 echo "Installing Prometheus..."
 wget -q -O prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz https://github.com/prometheus/prometheus/releases/download/v${PROMETHEUS_VERSION}/prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
 tar -xzf prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz
-sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/prometheus /usr/local/bin/
-sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/promtool /usr/local/bin/
-sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/consoles /etc/prometheus/
-sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/console_libraries /etc/prometheus/
-sudo mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/prometheus.yml /etc/prometheus/
-sudo useradd -rs /bin/false prometheus
-sudo tee /etc/systemd/system/prometheus.service > /dev/null << EOF
+mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/prometheus /usr/local/bin/
+mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/promtool /usr/local/bin/
+mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/consoles /etc/prometheus/
+mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/console_libraries /etc/prometheus/
+mv prometheus-${PROMETHEUS_VERSION}.linux-amd64/prometheus.yml /etc/prometheus/
+useradd -rs /bin/false prometheus
+tee /etc/systemd/system/prometheus.service > /dev/null << EOF
 [Unit]
 Description=Prometheus
 Wants=network-online.target
@@ -62,16 +62,16 @@ ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus.yml
 [Install]
 WantedBy=multi-user.target
 EOF
-sudo mkdir -p /var/lib/prometheus
-sudo chown -R prometheus:prometheus /var/lib/prometheus
-sudo systemctl daemon-reload
-sudo systemctl start prometheus
-sudo systemctl enable prometheus
+mkdir -p /var/lib/prometheus
+chown -R prometheus:prometheus /var/lib/prometheus
+systemctl daemon-reload
+systemctl start prometheus
+systemctl enable prometheus
 rm -rf prometheus-${PROMETHEUS_VERSION}.linux-amd64.tar.gz prometheus-${PROMETHEUS_VERSION}.linux-amd64
 
 # Add Node Exporter job to Prometheus configuration
 echo "Adding Node Exporter job to Prometheus configuration..."
-sudo tee -a /etc/prometheus/prometheus.yml > /dev/null <<EOL
+tee -a /etc/prometheus/prometheus.yml > /dev/null <<EOL
 
   - job_name: "node"
     static_configs:
@@ -79,19 +79,19 @@ sudo tee -a /etc/prometheus/prometheus.yml > /dev/null <<EOL
 EOL
 
 # Restart Prometheus to apply changes
-sudo systemctl restart prometheus
+systemctl restart prometheus
 
 # Install Grafana
 echo "Installing Grafana..."
-sudo mkdir -p /etc/apt/keyrings/
-wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
-echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list > /dev/null
-sudo apt-get update
-sudo apt-get install -y grafana
+mkdir -p /etc/apt/keyrings/
+wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor |  tee /etc/apt/keyrings/grafana.gpg > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" |  tee -a /etc/apt/sources.list.d/grafana.list > /dev/null
+apt-get update
+apt-get install -y grafana
 
 # Start and enable Grafana service
-sudo systemctl start grafana-server
-sudo systemctl enable grafana-server
+systemctl start grafana-server
+systemctl enable grafana-server
 
 # Wait for Grafana to start
 echo "Waiting for Grafana to start..."
