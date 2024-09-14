@@ -140,7 +140,7 @@ curl -X POST -H "Content-Type: application/json" \
 INFINITY_PLUGIN_VERSION="2.9.5"
 echo "Installing Infinity Datasource plugin..."
 grafana-cli plugins install yesoreyeram-infinity-datasource $INFINITY_PLUGIN_VERSION
-sudo systemctl restart grafana-server
+systemctl restart grafana-server
 
 # Configure the Infinity datasource
 echo "Configuring Infinity data source..."
