@@ -620,6 +620,7 @@
       "type": "table"
     }
   ],
+  "refresh": "auto",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
