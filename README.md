@@ -15,7 +15,7 @@ This script automates the setup, management, and restoration of the Zenon Networ
 
 ## Prerequisites
 
-This script assumes you're running a Linux distribution that uses `apt` as a package manager (e.g., Ubuntu or Debian). You must also have superuser (root) privileges to execute this script.
+This script assumes you're running a Linux distribution that uses `apt` as a package manager (e.g., Ubuntu or Debian). You need to have `git` installed. You must also have superuser (root) privileges to execute this script.
 
 ## Usage
 

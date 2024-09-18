@@ -33,7 +33,7 @@
       "type": "datasource",
       "id": "yesoreyeram-infinity-datasource",
       "name": "Infinity",
-      "version": "2.9.5"
+      "version": "2.10.0"
     }
   ],
   "annotations": {
@@ -620,16 +620,27 @@
       "type": "table"
     }
   ],
+  "refresh": "auto",
   "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": [
       {
-        "current": {},
+        "current": {
+          "selected": false,
+          "text": "http://127.0.0.1:35997",
+          "value": "http://127.0.0.1:35997"
+        },
         "hide": 0,
         "name": "Server",
-        "options": [],
-        "query": "127.0.0.1:35997",
+        "options": [
+          {
+            "selected": true,
+            "text": "http://127.0.0.1:35997",
+            "value": "http://127.0.0.1:35997"
+          }
+        ],
+        "query": "http://127.0.0.1:35997",
         "skipUrlSync": false,
         "type": "textbox"
       }
@@ -643,6 +654,6 @@
   "timezone": "browser",
   "title": "znnd",
   "uid": "cdwiqq6aboe0wf",
-  "version": 7,
+  "version": 1,
   "weekStart": ""
 }
