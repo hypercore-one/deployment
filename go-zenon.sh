@@ -266,7 +266,7 @@ monitor_logs() {
 # Function to install Grafana
 install_grafana() {
     echo "Installing Grafana..."
-    wget -O grafana.sh https://raw.githubusercontent.com/go-zenon/go/main/grafana.sh
+    wget -O grafana.sh https://raw.githubusercontent.com/hypercore-one/deployment/main/grafana.sh
     chmod +x grafana.sh
     ./grafana.sh
     echo "Grafana installed successfully."
