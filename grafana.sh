@@ -160,9 +160,11 @@ curl -X POST -H "Content-Type: application/json" \
   }' \
   http://localhost:3000/api/datasources
 
-# Fetch and prepare the znnd dashboard
-ZNND_DASHBOARD_JSON_URL="https://raw.githubusercontent.com/go-zenon/go/main/dashboards/znnd.json"
-echo "Importing znnd Dashboard..."
+# Fetch and prepare the znnd dashboard dynamically from the GitHub repo and branch under development
+GITHUB_REPO=$(git config --get remote.origin.url | sed 's/.*github.com[:\/]\(.*\)\.git/\1/')
+GITHUB_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+ZNND_DASHBOARD_JSON_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/dashboards/znnd.json"
+echo "Importing znnd Dashboard from branch ${GITHUB_BRANCH} of repo ${GITHUB_REPO}..."
 curl -s $ZNND_DASHBOARD_JSON_URL -o /tmp/znnd_dashboard.json
 
 # Construct the final API request payload with the dashboard JSON
