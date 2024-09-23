@@ -212,7 +212,7 @@ EOF
 }
 
 # Function to start go-zenon service
-start_service() {
+start_go_zenon() {
     echo "Starting go-zenon service..."
     systemctl start go-zenon
     echo "go-zenon started successfully."
