@@ -228,7 +228,7 @@ deploy_go_zenon() {
     install_go
     clone_and_build_go_zenon
     create_service
-    start_service
+    start_go_zenon
 }
 
 # Function to restore go-zenon from bootstrap
