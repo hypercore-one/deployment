@@ -17,8 +17,11 @@ cat << 'EOF'
 \_| \_/\___|\__| \_/\_/ \___/|_|  |_|\_\  \___/|_|   \_|  |_/\___/|_| |_| |_|\___|_| |_|\__|\__,_|_| |_| |_|
 EOF
 
-# Check architecture and OS
+# Global variables
+BUILD_SOURCE=false
+BUILD_SOURCE_URL=""
 
+# Check architecture and OS
 ARCH=$(uname -m)
 GO_URL=""
 GO_VERSION=1.23.0
@@ -129,17 +132,21 @@ select_branch() {
 clone_and_build_go_zenon() {
     stop_znnd_if_running
 
-    echo "Enter the GitHub repository URL (default: https://github.com/zenon-network/go-zenon.git):"
-    read -r repo_url
-
-    # Use default URL if none is provided
-    repo_url=${repo_url:-"https://github.com/zenon-network/go-zenon.git"}
-
-    # Default branch to master if using the default URL
-    if [ "$repo_url" == "https://github.com/zenon-network/go-zenon.git" ]; then
+    if [ "$BUILD_SOURCE" = false ]; then
+        # Default behavior: no prompts, use default repo and branch
+        repo_url="https://github.com/zenon-network/go-zenon.git"
         branch="master"
     else
-        # Get branches
+        # If BUILD_SOURCE_URL is empty, prompt for repo URL
+        if [ -z "$BUILD_SOURCE_URL" ]; then
+            echo "Enter the GitHub repository URL (default: https://github.com/zenon-network/go-zenon.git):"
+            read -r repo_url
+            repo_url=${repo_url:-"https://github.com/zenon-network/go-zenon.git"}
+        else
+            repo_url="$BUILD_SOURCE_URL"
+        fi
+
+        # Get branches from the repository
         get_branches "$repo_url"
 
         # Convert branches to array
@@ -228,7 +235,7 @@ deploy_go_zenon() {
     install_go
     clone_and_build_go_zenon
     create_service
-    start_service
+    start_go_zenon
 }
 
 # Function to restore go-zenon from bootstrap
@@ -286,14 +293,15 @@ show_help() {
     echo "Usage: $0 [OPTIONS]"
     echo
     echo "Options:"
-    echo "  --deploy            Deploy and set up the Zenon Network"
-    echo "  --restore           Restore go-zenon from bootstrap"
-    echo "  --restart           Restart the go-zenon service"
-    echo "  --stop              Stop the go-zenon service"
-    echo "  --start             Start the go-zenon service"
-    echo "  --status            Monitor znnd logs"
-    echo "  --grafana           Install Grafana"
-    echo "  --help              Display this help message"
+    echo "  --deploy              Deploy and set up the Zenon Network"
+    echo "  --buildSource [URL]   Build from a specific source repository. If URL is provided, it will be used as the source."
+    echo "  --restore             Restore go-zenon from bootstrap"
+    echo "  --restart             Restart the go-zenon service"
+    echo "  --stop                Stop the go-zenon service"
+    echo "  --start               Start the go-zenon service"
+    echo "  --status              Monitor znnd logs"
+    echo "  --grafana             Install Grafana"
+    echo "  --help                Display this help message"
     echo
 }
 
@@ -305,6 +313,16 @@ else
         case $1 in
             --deploy )
                 deploy_go_zenon
+                exit
+                ;;
+            --buildSource )
+                BUILD_SOURCE=true
+                shift
+                if [[ "$1" != "" && "$1" != -* ]]; then
+                    BUILD_SOURCE_URL="$1"
+                    shift
+                fi
+                deploy_go_zenon  # Added this line
                 exit
                 ;;
             --restore )
@@ -337,9 +355,8 @@ else
                 ;;
             * )
                 echo "Invalid option: $1"
-                echo "Usage: $0 [--deploy] [--restore] [--restart] [--stop] [--start] [--status] [--grafana] [--help]"
+                echo "Usage: $0 [--deploy] [--buildSource [URL]] [--restore] [--restart] [--stop] [--start] [--status] [--grafana] [--help]"
                 exit 1
         esac
-        shift
     done
 fi
