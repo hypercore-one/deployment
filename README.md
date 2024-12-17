@@ -1,6 +1,6 @@
 # Zenon Network Setup Script
 
-This script automates the setup, management, and restoration of the Zenon Network (`go-zenon`) node. It handles dependencies installation, Go installation, Zenon deployment, and service management. The script also offers additional options for restoring from a bootstrap, monitoring logs, and installing Grafana for visualizing data.
+This script automates the setup, management, and restoration of the Zenon Network (`go-zenon`) node. It handles dependencies installation, Go installation, Zenon deployment, and service management. The script also offers additional options for backing up and restoring data, monitoring logs, and installing Grafana for visualizing data.
 
 ## Features
 
@@ -8,7 +8,7 @@ This script automates the setup, management, and restoration of the Zenon Networ
 - **Automated Zenon Deployment**: Clones the `go-zenon` repository, builds it, and sets it up as a service.
 - **Automated Dependencies Installation**: Installs `make`, `gcc`, and `jq` automatically without user intervention.
 - **Zenon Service Management**: Provides options to stop, start, and restart the `go-zenon` service.
-- **Restore from Bootstrap**: Downloads and runs a script to restore the node from a bootstrap.
+- **Backup and Restore**: Allows you to backup your node data and restore it when needed. Backup source can be local or Digital Ocean.
 - **Log Monitoring**: Allows you to monitor `znnd` logs in real-time.
 - **Grafana Installation**: Optionally installs Grafana for monitoring Zenon metrics.
 - **Non-Interactive Installations**: Automatically selects default options during package installation to avoid any prompts.
@@ -19,22 +19,31 @@ This script assumes you're running a Linux distribution that uses `apt` as a pac
 
 ## Usage
 
-Clone the script or save it locally, then run it using a bash terminal:
+Clone the script and make it executable
+```bash
+git clone https://github.com/hypercore-one/deployment.git
+cd deployment
+sudo chmod +x go-zenon.sh
+```
 
+Run the script
 ```bash
 sudo ./go-zenon.sh [OPTIONS]
 ```
 
 ### Options
 
-- `--deploy`: Deploy and set up the Zenon Network.
-- `--restore`: Restore `go-zenon` from a bootstrap.
+- `--deploy`: Deploy and set up the `go-zenon` node
+- `--buildSource [URL]`: Build from a specific source repository. If URL is provided, it will be used as the source. Otherwise the script will ask for a URL during installation. 
+- `--backup`: Create a local backup of your node data.
+- `--restore`: Restore node data from a local backup.
+- `--restoreDO`: Restore `go-zenon` from a Digital Ocean bootstrap.
 - `--restart`: Restart the `go-zenon` service.
 - `--stop`: Stop the `go-zenon` service.
 - `--start`: Start the `go-zenon` service.
 - `--status`: Monitor `znnd` logs.
 - `--grafana`: Install Grafana for monitoring metrics.
-- `--help`: Display the help message.
+- `--help`: Display the flag options. 
 
 ### Example Usage
 
@@ -53,12 +62,32 @@ This will:
 - Build the project.
 - Set up and enable the `go-zenon` service.
 
-#### Restoring from Bootstrap
+#### Backing Up Node Data
 
-To restore from a bootstrap, use:
+To create a local backup of your node data:
+
+```bash
+sudo ./go-zenon.sh --backup
+```
+
+This will create a timestamped backup of your node data in the specified backup directory.
+
+#### Restoring from Local Backup
+
+To restore your node data from a local backup:
 
 ```bash
 sudo ./go-zenon.sh --restore
+```
+
+This will list available local backups and allow you to select one to restore.
+
+#### Restoring from Digital Ocean Bootstrap
+
+To restore from the Digital Ocean bootstrap:
+
+```bash
+sudo ./go-zenon.sh --restoreDO
 ```
 
 #### Monitoring Logs
@@ -89,6 +118,8 @@ You can adjust the Go version or repository URL by modifying the following varia
 - Ensure you run this script as root or use `sudo` for it to function properly.
 - The script is designed to be non-interactive when installing dependencies, so you won't be prompted to select any options during the installation process.
 - Be cautious when running the script, as it will automatically update and upgrade your system packages during the `apt-get` operations.
+- Regular backups are recommended to prevent data loss.
+- When restoring from a backup, the node service will be automatically stopped before restoration and started afterward.
 
 ---
 

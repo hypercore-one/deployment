@@ -238,16 +238,38 @@ deploy_go_zenon() {
     start_go_zenon
 }
 
-# Function to restore go-zenon from bootstrap
-restore_go_zenon() {
-    echo "Restoring go-zenon from bootstrap..."
-    # Download and run the restore.sh script
+# Function to restore go-zenon from DO bootstrap
+restore_go_zenon_do() {
+    echo "Restoring go-zenon from Digital Ocean bootstrap..."
     wget -O go-zenon_restore.sh "https://gist.githubusercontent.com/0x3639/05c6e2ba6b7f0c2a502a6bb4da6f4746/raw/ff4343433b31a6c85020c887256c0fd3e18f01d9/restore.sh"
     chmod +x go-zenon_restore.sh
     ./go-zenon_restore.sh
 
     # Cleanup the temporary restore script
     rm go-zenon_restore.sh
+}
+
+# Function to backup go-zenon
+backup_go_zenon() {
+    echo "Backing up go-zenon..."
+    # Download and run the backup.sh script
+    wget -O go-zenon_backup.sh "https://raw.githubusercontent.com/zenon-network/znn-bundle/master/backup.sh"
+    chmod +x go-zenon_backup.sh
+    ./go-zenon_backup.sh --backup
+
+    # Cleanup the temporary backup script
+    rm go-zenon_backup.sh
+}
+
+# Function to restore from local backup
+restore_go_zenon_local() {
+    echo "Restoring from local backup..."
+    wget -O go-zenon_backup.sh "https://raw.githubusercontent.com/zenon-network/znn-bundle/master/backup.sh"
+    chmod +x go-zenon_backup.sh
+    ./go-zenon_backup.sh --restore
+
+    # Cleanup the temporary backup script
+    rm go-zenon_backup.sh
 }
 
 # Function to restart go-zenon
@@ -295,13 +317,15 @@ show_help() {
     echo "Options:"
     echo "  --deploy              Deploy and set up the Zenon Network"
     echo "  --buildSource [URL]   Build from a specific source repository. If URL is provided, it will be used as the source."
-    echo "  --restore             Restore go-zenon from bootstrap"
-    echo "  --restart             Restart the go-zenon service"
-    echo "  --stop                Stop the go-zenon service"
-    echo "  --start               Start the go-zenon service"
-    echo "  --status              Monitor znnd logs"
-    echo "  --grafana             Install Grafana"
-    echo "  --help                Display this help message"
+    echo "  --restore            Restore go-zenon from local backup"
+    echo "  --restoreDO         Restore go-zenon from Digital Ocean bootstrap"
+    echo "  --backup             Backup go-zenon data"
+    echo "  --restart            Restart the go-zenon service"
+    echo "  --stop               Stop the go-zenon service"
+    echo "  --start              Start the go-zenon service"
+    echo "  --status             Monitor znnd logs"
+    echo "  --grafana            Install Grafana"
+    echo "  --help               Display this help message"
     echo
 }
 
@@ -322,11 +346,19 @@ else
                     BUILD_SOURCE_URL="$1"
                     shift
                 fi
-                deploy_go_zenon  # Added this line
+                deploy_go_zenon
                 exit
                 ;;
             --restore )
-                restore_go_zenon
+                restore_go_zenon_local
+                exit
+                ;;
+            --restoreDO )
+                restore_go_zenon_do
+                exit
+                ;;
+            --backup )
+                backup_go_zenon
                 exit
                 ;;
             --restart )
@@ -355,7 +387,7 @@ else
                 ;;
             * )
                 echo "Invalid option: $1"
-                echo "Usage: $0 [--deploy] [--buildSource [URL]] [--restore] [--restart] [--stop] [--start] [--status] [--grafana] [--help]"
+                echo "Usage: $0 [--deploy] [--buildSource [URL]] [--restore] [--restoreDO] [--backup] [--restart] [--stop] [--start] [--status] [--grafana] [--help]"
                 exit 1
         esac
     done
