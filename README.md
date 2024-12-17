@@ -8,7 +8,7 @@ This script automates the setup, management, and restoration of the Zenon Networ
 - **Automated Zenon Deployment**: Clones the `go-zenon` repository, builds it, and sets it up as a service.
 - **Automated Dependencies Installation**: Installs `make`, `gcc`, and `jq` automatically without user intervention.
 - **Zenon Service Management**: Provides options to stop, start, and restart the `go-zenon` service.
-- **Backup and Restore**: Allows you to backup your node data and restore it when needed. Backup source can be local of Digital Ocean.
+- **Backup and Restore**: Allows you to backup your node data and restore it when needed. Backup source can be local or Digital Ocean.
 - **Log Monitoring**: Allows you to monitor `znnd` logs in real-time.
 - **Grafana Installation**: Optionally installs Grafana for monitoring Zenon metrics.
 - **Non-Interactive Installations**: Automatically selects default options during package installation to avoid any prompts.
@@ -19,25 +19,31 @@ This script assumes you're running a Linux distribution that uses `apt` as a pac
 
 ## Usage
 
-Clone the script or save it locally, then run it using a bash terminal:
+Clone the script and make it executable
+```bash
+git clone https://github.com/hypercore-one/deployment.git
+cd deployment
+sudo chmod +x go-zenon.sh
+```
 
+Run the script
 ```bash
 sudo ./go-zenon.sh [OPTIONS]
 ```
 
 ### Options
 
-- `--deploy`: Deploy and set up the Zenon Network.
-- `--buildSource [URL]`: Build from a specific source repository. If URL is provided, it will be used as the source.
-- `--backup`: Create a backup of your node data.
+- `--deploy`: Deploy and set up the `go-zenon` node
+- `--buildSource [URL]`: Build from a specific source repository. If URL is provided, it will be used as the source. Otherwise the script will ask for a URL during installation. 
+- `--backup`: Create a local backup of your node data.
 - `--restore`: Restore node data from a local backup.
-- `--restoreDO`: Restore `go-zenon` from Digital Ocean bootstrap.
+- `--restoreDO`: Restore `go-zenon` from a Digital Ocean bootstrap.
 - `--restart`: Restart the `go-zenon` service.
 - `--stop`: Stop the `go-zenon` service.
 - `--start`: Start the `go-zenon` service.
 - `--status`: Monitor `znnd` logs.
 - `--grafana`: Install Grafana for monitoring metrics.
-- `--help`: Display the help message.
+- `--help`: Display the flag options. 
 
 ### Example Usage
 
@@ -58,7 +64,7 @@ This will:
 
 #### Backing Up Node Data
 
-To create a backup of your node data:
+To create a local backup of your node data:
 
 ```bash
 sudo ./go-zenon.sh --backup
@@ -74,7 +80,7 @@ To restore your node data from a local backup:
 sudo ./go-zenon.sh --restore
 ```
 
-This will list available backups and allow you to select one to restore.
+This will list available local backups and allow you to select one to restore.
 
 #### Restoring from Digital Ocean Bootstrap
 
