@@ -256,6 +256,8 @@ EOF
 
 # Function to start node service
 start_node() {
+    local node_type=${1:-"zenon"}  # Default to zenon if no argument
+    set_node_config "$node_type"
     echo "Starting $ACTIVE_SERVICE service..."
     systemctl start $ACTIVE_SERVICE
     echo "$ACTIVE_SERVICE started successfully."
@@ -295,15 +297,19 @@ restart_node() {
 
 # Function to stop node
 stop_node() {
+    local node_type=${1:-"zenon"}  # Default to zenon if no argument
+    set_node_config "$node_type"
     echo "Stopping $ACTIVE_SERVICE..."
     systemctl stop $ACTIVE_SERVICE
     echo "$ACTIVE_SERVICE stopped successfully."
 }
 
-# Function to monitor znnd logs
+# Function to monitor logs
 monitor_logs() {
-    echo "Monitoring znnd logs. Press Ctrl+C to stop."
-    tail -f /var/log/syslog | grep znnd
+    local node_type=${1:-"zenon"}  # Default to zenon if no argument
+    set_node_config "$node_type"
+    echo "Monitoring $ACTIVE_BINARY logs. Press Ctrl+C to stop."
+    tail -f /var/log/syslog | grep $ACTIVE_BINARY
 }
 
 # Function to install Grafana
@@ -334,9 +340,9 @@ show_help() {
     echo "  --buildSource [URL]   Build from a specific source repository"
     echo "  --restore             Restore go-zenon from bootstrap"
     echo "  --restart             Restart the go-zenon service"
-    echo "  --stop                Stop the go-zenon service"
-    echo "  --start               Start the go-zenon service"
-    echo "  --status              Monitor znnd logs"
+    echo "  --stop [--hq]         Stop the node service (add --hq for HyperQube)"
+    echo "  --start [--hq]        Start the node service (add --hq for HyperQube)"
+    echo "  --status [--hq]       Monitor node logs (add --hq for HyperQube)"
     echo "  --grafana             Install Grafana"
     echo "  --help                Display this help message"
     echo
@@ -383,15 +389,30 @@ else
                 exit
                 ;;
             --stop )
-                stop_node
+                shift
+                if [[ "$1" == "--hq" ]]; then
+                    stop_node "hyperqube"
+                else
+                    stop_node "zenon"
+                fi
                 exit
                 ;;
             --start )
-                start_node
+                shift
+                if [[ "$1" == "--hq" ]]; then
+                    start_node "hyperqube"
+                else
+                    start_node "zenon"
+                fi
                 exit
                 ;;
             --status )
-                monitor_logs
+                shift
+                if [[ "$1" == "--hq" ]]; then
+                    monitor_logs "hyperqube"
+                else
+                    monitor_logs "zenon"
+                fi
                 exit
                 ;;
             --grafana )
