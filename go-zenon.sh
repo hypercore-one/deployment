@@ -40,6 +40,50 @@ if [[ "$GO_URL" == "" ]]; then
     exit 1
 fi
 
+# Node configuration
+DEFAULT_ZENON_REPO="https://github.com/zenon-network/go-zenon.git"
+DEFAULT_ZENON_BRANCH="master"
+DEFAULT_ZENON_BINARY="znnd"
+DEFAULT_ZENON_SERVICE="go-zenon"
+
+DEFAULT_HYPERQUBE_REPO="https://github.com/hypercore-one/hyperqube_z.git"
+DEFAULT_HYPERQUBE_BRANCH="hyperqube_z"
+DEFAULT_HYPERQUBE_BINARY="hqzd"
+DEFAULT_HYPERQUBE_SERVICE="go-hyperqube"
+
+# Active configuration (will be set based on flags)
+ACTIVE_NODE_TYPE="zenon"  # default node type will always be zenon
+ACTIVE_REPO=""
+ACTIVE_BRANCH=""
+ACTIVE_BINARY=""
+ACTIVE_SERVICE=""
+CUSTOM_REPO_URL=""
+
+# Function to set active configuration
+set_node_config() {
+    local node_type=$1
+    
+    case $node_type in
+        "zenon")
+            ACTIVE_REPO=$DEFAULT_ZENON_REPO
+            ACTIVE_BRANCH=$DEFAULT_ZENON_BRANCH
+            ACTIVE_BINARY=$DEFAULT_ZENON_BINARY
+            ACTIVE_SERVICE=$DEFAULT_ZENON_SERVICE
+            ;;
+        "hyperqube")
+            ACTIVE_REPO=$DEFAULT_HYPERQUBE_REPO
+            ACTIVE_BRANCH=$DEFAULT_HYPERQUBE_BRANCH
+            ACTIVE_BINARY=$DEFAULT_HYPERQUBE_BINARY
+            ACTIVE_SERVICE=$DEFAULT_HYPERQUBE_SERVICE
+            ;;
+    esac
+
+    # Override repo URL if custom URL provided
+    if [ -n "$CUSTOM_REPO_URL" ]; then
+        ACTIVE_REPO=$CUSTOM_REPO_URL
+    fi
+}
+
 # Function to check and rename existing directories
 rename_existing_dir() {
     local dir_name=$1
@@ -96,14 +140,14 @@ install_dependencies() {
     fi
 }
 
-# Function to stop go-zenon if running
-stop_znnd_if_running() {
-    if systemctl is-active --quiet go-zenon; then
-        echo "Stopping go-zenon service..."
-        systemctl stop go-zenon
-        echo "go-zenon service stopped."
+# Function to stop node service if running
+stop_node_if_running() {
+    if systemctl is-active --quiet $ACTIVE_SERVICE; then
+        echo "Stopping $ACTIVE_SERVICE service..."
+        systemctl stop $ACTIVE_SERVICE
+        echo "$ACTIVE_SERVICE service stopped."
     else
-        echo "go-zenon service is not running."
+        echo "$ACTIVE_SERVICE service is not running."
     fi
 }
 
@@ -128,74 +172,66 @@ select_branch() {
     done
 }
 
-# Function to clone and build go-zenon
-clone_and_build_go_zenon() {
-    stop_znnd_if_running
+# Function to clone and build node
+clone_and_build_node() {
+    stop_node_if_running
 
     if [ "$BUILD_SOURCE" = false ]; then
-        # Default behavior: no prompts, use default repo and branch
-        repo_url="https://github.com/zenon-network/go-zenon.git"
-        branch="master"
+        repo_url=$ACTIVE_REPO
+        branch=$ACTIVE_BRANCH
     else
         # If BUILD_SOURCE_URL is empty, prompt for repo URL
-        if [ -z "$BUILD_SOURCE_URL" ]; then
-            echo "Enter the GitHub repository URL (default: https://github.com/zenon-network/go-zenon.git):"
+        if [ -z "$CUSTOM_REPO_URL" ]; then
+            echo "Enter the GitHub repository URL (default: $ACTIVE_REPO):"
             read -r repo_url
-            repo_url=${repo_url:-"https://github.com/zenon-network/go-zenon.git"}
+            repo_url=${repo_url:-$ACTIVE_REPO}
         else
-            repo_url="$BUILD_SOURCE_URL"
+            repo_url=$CUSTOM_REPO_URL
         fi
 
-        # Get branches from the repository
         get_branches "$repo_url"
-
-        # Convert branches to array
         branches_array=($branches)
 
-        # Check if there are any branches
         if [ ${#branches_array[@]} -eq 0 ]; then
             echo "No branches found. Exiting."
             exit 1
         fi
 
-        # Prompt user to select a branch
         select_branch "${branches_array[@]}"
         branch=$selected_branch
     fi
 
-    echo "Checking for existing go-zenon directory..."
-    # Check and rename existing go-zenon directory
-    rename_existing_dir "go-zenon"
+    local repo_dir="${ACTIVE_SERVICE}"
+    echo "Checking for existing $repo_dir directory..."
+    rename_existing_dir "$repo_dir"
 
-    # Clone the repository
     echo "Cloning branch '$branch' from repository '$repo_url'..."
-    git clone -b "$branch" "$repo_url" go-zenon
-
+    git clone -b "$branch" "$repo_url" "$repo_dir"
     echo "Clone completed."
 
-    cd go-zenon
+    cd "$repo_dir"
 
-    # Build the project using the full path to the Go binary
-    GO111MODULE=on ../go/bin/go build -o build/znnd ./cmd/znnd
-    cp build/znnd /usr/local/bin/
+    # Build the project
+    GO111MODULE=on ../go/bin/go build -o "build/$ACTIVE_BINARY" "./cmd/$ACTIVE_BINARY"
+    cp "build/$ACTIVE_BINARY" /usr/local/bin/
 }
 
-# Function to create the go-zenon service
+# Function to create the node service
 create_service() {
-    echo "Checking if go-zenon.service is already set up..."
+    echo "Checking if $ACTIVE_SERVICE.service is already set up..."
 
-    if systemctl is-active --quiet go-zenon; then
-        echo "go-zenon.service is already active. Skipping setup."
+    if systemctl is-active --quiet $ACTIVE_SERVICE; then
+        echo "$ACTIVE_SERVICE.service is already active. Skipping setup."
         return
     fi
 
-    if [ -e /etc/systemd/system/go-zenon.service ]; then
-        echo "go-zenon.service already exists, but it's not active. Setting it up..."
+    if [ -e /etc/systemd/system/$ACTIVE_SERVICE.service ]; then
+        echo "$ACTIVE_SERVICE.service already exists, but it's not active. Setting it up..."
     else
-        echo "Creating go-zenon.service..."
-        cat << EOF > /etc/systemd/system/go-zenon.service
+        echo "Creating $ACTIVE_SERVICE.service..."
+        cat << EOF > /etc/systemd/system/$ACTIVE_SERVICE.service
 [Unit]
-Description=znnd service
+Description=$ACTIVE_BINARY service
 After=network.target
 [Service]
 LimitNOFILE=32768
@@ -203,8 +239,8 @@ User=root
 Group=root
 Type=simple
 SuccessExitStatus=SIGKILL 9
-ExecStart=/usr/local/bin/znnd
-ExecStop=/usr/bin/pkill -9 znnd
+ExecStart=/usr/local/bin/$ACTIVE_BINARY
+ExecStop=/usr/bin/pkill -9 $ACTIVE_BINARY
 Restart=on-failure
 TimeoutStopSec=10s
 TimeoutStartSec=10s
@@ -214,54 +250,54 @@ EOF
     fi
 
     systemctl daemon-reload
-    systemctl enable go-zenon.service
-    echo "go-zenon.service is set up."
+    systemctl enable $ACTIVE_SERVICE.service
+    echo "$ACTIVE_SERVICE.service is set up."
 }
 
-# Function to start go-zenon service
-start_go_zenon() {
-    echo "Starting go-zenon service..."
-    systemctl start go-zenon
-    echo "go-zenon started successfully."
+# Function to start node service
+start_node() {
+    echo "Starting $ACTIVE_SERVICE service..."
+    systemctl start $ACTIVE_SERVICE
+    echo "$ACTIVE_SERVICE started successfully."
 }
 
-# Function to deploy go-zenon
-deploy_go_zenon() {
+# Function to deploy node
+deploy_node() {
     error_string=("Error: This command has to be run with superuser"
       "privileges (under the root user on most systems).")
     if [[ $(id -u) -ne 0 ]]; then echo "${error_string[@]}" >&2; exit 1; fi
 
     install_dependencies
     install_go
-    clone_and_build_go_zenon
+    clone_and_build_node
     create_service
-    start_go_zenon
+    start_node
 }
 
-# Function to restore go-zenon from bootstrap
-restore_go_zenon() {
-    echo "Restoring go-zenon from bootstrap..."
+# Function to restore node from bootstrap
+restore_node() {
+    echo "Restoring $ACTIVE_SERVICE from bootstrap..."
     # Download and run the restore.sh script
-    wget -O go-zenon_restore.sh "https://gist.githubusercontent.com/0x3639/05c6e2ba6b7f0c2a502a6bb4da6f4746/raw/ff4343433b31a6c85020c887256c0fd3e18f01d9/restore.sh"
-    chmod +x go-zenon_restore.sh
-    ./go-zenon_restore.sh
+    wget -O $ACTIVE_SERVICE_restore.sh "https://gist.githubusercontent.com/0x3639/05c6e2ba6b7f0c2a502a6bb4da6f4746/raw/ff4343433b31a6c85020c887256c0fd3e18f01d9/restore.sh"
+    chmod +x $ACTIVE_SERVICE_restore.sh
+    ./$ACTIVE_SERVICE_restore.sh
 
     # Cleanup the temporary restore script
-    rm go-zenon_restore.sh
+    rm $ACTIVE_SERVICE_restore.sh
 }
 
-# Function to restart go-zenon
-restart_go_zenon() {
-    echo "Restarting go-zenon..."
-    systemctl restart go-zenon
-    echo "go-zenon restarted successfully."
+# Function to restart node
+restart_node() {
+    echo "Restarting $ACTIVE_SERVICE..."
+    systemctl restart $ACTIVE_SERVICE
+    echo "$ACTIVE_SERVICE restarted successfully."
 }
 
-# Function to stop go-zenon
-stop_go_zenon() {
-    echo "Stopping go-zenon..."
-    systemctl stop go-zenon
-    echo "go-zenon stopped successfully."
+# Function to stop node
+stop_node() {
+    echo "Stopping $ACTIVE_SERVICE..."
+    systemctl stop $ACTIVE_SERVICE
+    echo "$ACTIVE_SERVICE stopped successfully."
 }
 
 # Function to monitor znnd logs
@@ -288,13 +324,14 @@ install_grafana() {
 }
 
 show_help() {
-    echo "A script to automate the setup, management, and restoration of the Zenon Network."
+    echo "A script to automate the setup, management, and restoration of Network Nodes."
     echo
     echo "Usage: $0 [OPTIONS]"
     echo
     echo "Options:"
     echo "  --deploy              Deploy and set up the Zenon Network"
-    echo "  --buildSource [URL]   Build from a specific source repository. If URL is provided, it will be used as the source."
+    echo "  --deploy --hq [URL]   Deploy and set up the HyperQube Network. Optional URL to override default repo."
+    echo "  --buildSource [URL]   Build from a specific source repository"
     echo "  --restore             Restore go-zenon from bootstrap"
     echo "  --restart             Restart the go-zenon service"
     echo "  --stop                Stop the go-zenon service"
@@ -307,12 +344,23 @@ show_help() {
 
 # Check for flags
 if [[ $# -eq 0 ]]; then
-    deploy_go_zenon
+    set_node_config "zenon"
+    deploy_node
 else
     while [[ "$1" != "" ]]; do
         case $1 in
             --deploy )
-                deploy_go_zenon
+                shift
+                if [[ "$1" == "--hq" ]]; then
+                    ACTIVE_NODE_TYPE="hyperqube"
+                    shift
+                    if [[ "$1" != "" && "$1" != -* ]]; then
+                        CUSTOM_REPO_URL="$1"
+                        shift
+                    fi
+                fi
+                set_node_config $ACTIVE_NODE_TYPE
+                deploy_node
                 exit
                 ;;
             --buildSource )
@@ -322,23 +370,24 @@ else
                     BUILD_SOURCE_URL="$1"
                     shift
                 fi
-                deploy_go_zenon  # Added this line
+                set_node_config "zenon"  # Explicitly set to zenon
+                deploy_node
                 exit
                 ;;
             --restore )
-                restore_go_zenon
+                restore_node
                 exit
                 ;;
             --restart )
-                restart_go_zenon
+                restart_node
                 exit
                 ;;
             --stop )
-                stop_go_zenon
+                stop_node
                 exit
                 ;;
             --start )
-                start_go_zenon
+                start_node
                 exit
                 ;;
             --status )
