@@ -110,13 +110,7 @@ install_go() {
 
 # Function to install dependencies
 install_dependencies() {
-    echo "Updating system and installing dependencies..."
-
-    # Set environment variable to prevent prompts
-    export DEBIAN_FRONTEND=noninteractive
-
-    # Automatically select default options using -y and avoid interactive prompts
-    apt-get update -y && apt-get upgrade -y
+    echo "Installing dependencies..."
 
     # Check if make is installed
     if ! command -v make &> /dev/null; then
@@ -263,6 +257,21 @@ start_node() {
     echo "$ACTIVE_SERVICE started successfully."
 }
 
+# Function to modify HyperQube config
+modify_hyperqube_config() {
+    local config_file="/root/.hqzd/config.json"
+    
+    if [ ! -f "$config_file" ]; then
+        echo "The config.json file does not exist. You should create it."
+        return 1
+    fi
+
+    echo "Modifying HyperQube config.json..."
+    # Use jq to modify the ListenPort
+    jq '.Net.ListenPort = 45995' "$config_file" > "$config_file.tmp" && mv "$config_file.tmp" "$config_file"
+    echo "Updated ListenPort to 45995 in config.json"
+}
+
 # Function to deploy node
 deploy_node() {
     error_string=("Error: This command has to be run with superuser"
@@ -273,6 +282,12 @@ deploy_node() {
     install_go
     clone_and_build_node
     create_service
+    
+    # If this is a HyperQube deployment, modify the config
+    if [ "$ACTIVE_NODE_TYPE" = "hyperqube" ]; then
+        modify_hyperqube_config
+    fi
+    
     start_node
 }
 
