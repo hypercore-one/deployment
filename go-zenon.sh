@@ -288,7 +288,7 @@ deploy_node() {
         modify_hyperqube_config
     fi
     
-    start_node
+    start_node "$ACTIVE_NODE_TYPE"
 }
 
 # Function to restore node from bootstrap
