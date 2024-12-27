@@ -416,11 +416,24 @@ else
             --buildSource )
                 BUILD_SOURCE=true
                 shift
-                if [[ "$1" != "" && "$1" != -* ]]; then
-                    BUILD_SOURCE_URL="$1"
+                # Check if next flag is --hq for HyperQube
+                if [[ "$1" == "--hq" ]]; then
+                    ACTIVE_NODE_TYPE="hyperqube"
                     shift
+                    # If we have a non-flag argument after --hq, treat it as the repo URL
+                    if [[ "$1" != "" && "$1" != -* ]]; then
+                        CUSTOM_REPO_URL="$1"
+                        shift
+                    fi
+                else
+                    ACTIVE_NODE_TYPE="zenon"
+                    # If we have a non-flag argument after --buildSource, treat it as the repo URL
+                    if [[ "$1" != "" && "$1" != -* ]]; then
+                        BUILD_SOURCE_URL="$1"
+                        shift
+                    fi
                 fi
-                set_node_config "zenon"  # Explicitly set to zenon
+                set_node_config "$ACTIVE_NODE_TYPE"
                 deploy_node
                 exit
                 ;;
@@ -469,7 +482,7 @@ else
                 ;;
             * )
                 echo "Invalid option: $1"
-                echo "Usage: $0 [--deploy] [--buildSource [URL]] [--restore] [--restart] [--stop] [--start] [--status] [--grafana] [--help]"
+                echo "Usage: $0 [--deploy] [--hq] [--buildSource [URL]] [--restore] [--restart] [--stop] [--start] [--status] [--grafana] [--help]"
                 exit 1
         esac
     done
