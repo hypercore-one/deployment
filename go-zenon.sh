@@ -94,18 +94,36 @@ rename_existing_dir() {
     fi
 }
 
-# Function to install Go
+# Function to install Go only if needed
 install_go() {
     echo "Checking for existing Go installation..."
 
-    # Check and rename existing go directory
+    # Check if go is already installed
+    if command -v go &> /dev/null; then
+        # Grab the current go version string, e.g. "go1.23.4"
+        current_go_version=$(go version | awk '{print $3}' | sed 's/^go//')
+
+        # Extract major and minor from e.g. "1.23.4" -> major=1, minor=23
+        major=$(echo "$current_go_version" | cut -d '.' -f1)
+        minor=$(echo "$current_go_version" | cut -d '.' -f2)
+
+        # If major >= 2 OR (major=1 AND minor >= 22), skip installing Go
+        if [ "$major" -gt 1 ] || { [ "$major" -eq 1 ] && [ "$minor" -ge 22 ]; }; then
+            echo "Go version $current_go_version >= 1.22 detected. Skipping Go install."
+            return
+        fi
+    fi
+
+    echo "No suitable Go version found or version < 1.22. Installing Go 1.23.0..."
+
+    # Rename any existing 'go' folder so we don't overwrite it
     rename_existing_dir "go"
 
-    echo "Downloading and installing Go..."
     curl -fsSLo "go.tar.gz" "$GO_URL"
     tar -C . -xzf "go.tar.gz"
     rm "go.tar.gz"
-    echo "Go installed successfully."
+
+    echo "Go 1.23.0 installed locally in ./go"
 }
 
 # Function to install dependencies
@@ -166,7 +184,7 @@ select_branch() {
     done
 }
 
-# Function to clone and build node
+# Function to clone and build the node
 clone_and_build_node() {
     stop_node_if_running
 
@@ -205,8 +223,19 @@ clone_and_build_node() {
 
     cd "$repo_dir"
 
+    # Decide which go command to use:
+    # - If system Go >=1.22 was detected, we skip local installation, so "go" is on PATH.
+    # - Otherwise, we installed Go 1.23.0 in ../go.
+    if command -v go &>/dev/null; then
+        echo "Building with system go..."
+        BUILD_CMD="go"
+    else
+        echo "Building with locally installed go 1.23.0..."
+        BUILD_CMD="../go/bin/go"
+    fi
+
     # Build the project
-    GO111MODULE=on ../go/bin/go build -o "build/$ACTIVE_BINARY" "./cmd/$ACTIVE_BINARY"
+    GO111MODULE=on $BUILD_CMD build -o "build/$ACTIVE_BINARY" "./cmd/$ACTIVE_BINARY"
     cp "build/$ACTIVE_BINARY" /usr/local/bin/
 }
 
