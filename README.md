@@ -23,6 +23,12 @@ Follow these steps on a Linux server:
    sudo ./zenon.sh
    ```
 
+## Requirements
+
+- **OS**: Linux with `apt` available (Debian/Ubuntu family).
+- **Architecture**: x86_64/amd64 only. Other architectures are currently not supported and the script will exit early.
+- **Permissions**: Root/sudo access required for system service management and file operations.
+
 ## Features
 
 - Interactive TUI via [gum](https://github.com/charmbracelet/gum)
@@ -109,7 +115,7 @@ For automation and scripting, use the following commands:
 ### HyperQube Configuration
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ZNNSH_HQZD_GENESIS_URL` | `https://gist.githubusercontent.com/georgezgeorgez/32edacf2681d7491169342cd8c698cdb/raw/f02295d4616f09b6cf606e0306fa501ad09856ba/genesis.json` | HyperQube genesis file URL |
+| `ZNNSH_HQZD_GENESIS_URL` | Default is set in `config.sh`, override at runtime | HyperQube genesis file URL |
 
 See `lib/config.sh` for the complete list of configuration options.
 </details>

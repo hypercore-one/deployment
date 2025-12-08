@@ -259,8 +259,8 @@ EOF
 
 
 modify_hyperqube_config() {
-    local hq_dir="${ZNNSH_HQZD_DIR:-/root/.hqzd}"
-    local genesis_url="${ZNNSH_HQZD_GENESIS_URL:-https://gist.githubusercontent.com/georgezgeorgez/32edacf2681d7491169342cd8c698cdb/raw/f02295d4616f09b6cf606e0306fa501ad09856ba/genesis.json}"
+    local hq_dir="${ZNNSH_HQZD_DIR:?ZNNSH_HQZD_DIR is required}"
+    local genesis_url="${ZNNSH_HQZD_GENESIS_URL:?ZNNSH_HQZD_GENESIS_URL is required}"
     local wallet_dir="$hq_dir/wallet"
     local genesis_file="$hq_dir/genesis.json"
     local config_file="$hq_dir/config.json"
